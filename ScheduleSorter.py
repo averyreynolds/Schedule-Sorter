@@ -11,6 +11,38 @@ class Course:                                                                   
     def __repr__(self):
         return f"{self.id}: {self.credits} Hours, {self.difficulty} Difficulty, Prereqs: {self.prereqs}"
 
+class Schedule:
+    def __init__(self, max_credits=17, max_difficulty=30):
+        self.max_credits = max_credits
+        self.max_difficulty = max_difficulty
+        self.semesters = []
+
+    def construct(self, unsorted_list):
+        sorted_courses = topological_sort(unsorted_list)
+        curr_semester = []
+        curr_credits = 0
+        curr_difficulty = 0
+
+        for course in sorted_courses:
+            if curr_credits + course.credits <= self.max_credits and curr_difficulty + course.difficulty <= self.max_difficulty:
+                curr_semester.append(course)
+                curr_credits += course.credits
+                curr_difficulty += course.difficulty
+            else:
+                self.semesters.append(curr_semester)
+                curr_semester = [course]
+                curr_credits = course.credits
+                curr_difficulty = course.difficulty
+        if curr_semester:
+            self.semesters.append(curr_semester)
+
+    def display(self):
+        for i, semester in enumerate(self.semesters, 1):
+            print(f"\nSemester {i}:")
+            for course in semester:
+                print(f"    {course}")
+
+
 def topological_sort(courses:list):                                                                             # Will sort classes by topological order of prerequisites (dependencies)
     graph = defaultdict(list)              # list of adjacent courses
     in_degree = defaultdict(int)           # number of prereqs leading into
@@ -37,32 +69,9 @@ def topological_sort(courses:list):                                             
 
     return sorted_order
 
-def sort_schedule(unsorted_list:list, max_credits = 17, max_difficulty = 30):                                   # default limiters
-    schedule = []
-    curr_semester = []
-    sorted_list = topological_sort(unsorted_list)
-    curr_credits = 0
-    curr_difficulty = 0
-
-    for course in sorted_list:
-        if course.credits + curr_credits <= max_credits and course.difficulty + curr_difficulty <= max_difficulty:
-            curr_semester.append(course)
-            curr_credits += course.credits
-            curr_difficulty += course.difficulty
-        else:
-            schedule.append(curr_semester)
-            curr_semester = [course]
-            curr_credits = course.credits
-            curr_difficulty = course.difficulty
-
-    if curr_semester:
-        schedule.append(curr_semester)
-
-    return schedule
-
-
 def main():
-    toBeSorted = []
+    initial_input = []
+    schedule = Schedule()
     class_count = int(input("How many classes would you like to sort: "))
     class_number = 1
 
@@ -76,15 +85,11 @@ def main():
         else:
             new_prereqs = [prereq.strip() for prereq in new_prereqs_input.split(",")]
 
-        toBeSorted.append(Course(new_id, new_credits, new_diff, new_prereqs))
+        initial_input.append(Course(new_id, new_credits, new_diff, new_prereqs))
         class_number += 1
 
-    schedule = sort_schedule(toBeSorted)
-
-    for i, semester in enumerate(schedule, 1):
-        print(f"\nSemester {i}: ")
-        for course in semester:
-            print(f"    {course}")
+    schedule.construct(initial_input)
+    schedule.display()
 
 if __name__ == "__main__":
     main()
