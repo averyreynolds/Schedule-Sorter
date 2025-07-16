@@ -1,5 +1,7 @@
 # Schedule Sorter
 from collections import defaultdict, deque
+import matplotlib.pyplot as plt
+import networkx as nx
 
 class Course:                                                                                                   # Course Constructor
     def __init__(self, id, credits, difficulty, prereqs=None):
@@ -69,6 +71,38 @@ def topological_sort(courses:list):                                             
 
     return sorted_order
 
+def viz_semester_load(schedule):            # Plots courses and credits per semester
+    semesters = [f"Semester {i+1}" for i in range(len(schedule.semesters))]
+    course_counts = [len(sem) for sem in schedule.semesters]
+    total_credits = [sum(c.credits for c in sem) for sem in schedule.semesters]
+
+    plt.figure(figsize=(8,5))
+    plt.bar(semesters, course_counts, color="blue")
+    plt.title("Number of Courses per Semester")
+    plt.ylabel("Courses")
+    plt.show()
+
+    plt.figure(figsize=(8,5))
+    plt.bar(semesters, total_credits, color="orange")
+    plt.title("Total Credit Hours per Semester")
+    plt.ylabel("Credits")
+    plt.show()
+
+def viz_prereqs(courses):
+    G = nx.DiGraph()
+
+    for course in courses:
+        if course.prereqs:
+            for prereq in course.prereqs:
+                G.add_edge(prereq, course.id)
+        else:
+            G.add_node(course.id)
+
+    plt.figure(figsize=(10,7))
+    nx.draw(G, with_labels=True, node_color="lightgreen", node_size=2000, arrows=True)
+    plt.title("Prerequisite Structure")
+    plt.show()
+
 def main():
     initial_input = []
     schedule = Schedule()
@@ -90,6 +124,9 @@ def main():
 
     schedule.construct(initial_input)
     schedule.display()
+
+    viz_semester_load(schedule)
+    viz_prereqs(initial_input)
 
 if __name__ == "__main__":
     main()
